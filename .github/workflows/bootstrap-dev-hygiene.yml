@@ -1,0 +1,10 @@
+name: Dev Hygiene
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo 'Running hygiene checks'
