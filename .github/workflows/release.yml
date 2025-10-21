@@ -2,30 +2,265 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release-please:
+  lint_and_test:
     runs-on: ubuntu-latest
     steps:
-      - name: Run Release Please
-        uses: googleapis/release-please-action@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          release-type: simple
-          package-name: the4lessons-orchestrator-template
-          changelog-types: |
-            [
-              {"type":"feat","section":"✨ Features","hidden":false},
-              {"type":"fix","section":"🐛 Fixes","hidden":false},
-              {"type":"perf","section":"⚡ Performance","hidden":false},
-              {"type":"refactor","section":"🔧 Refactors","hidden":false},
-              {"type":"docs","section":"📝 Docs","hidden":false},
-              {"type":"test","section":"🧪 Tests","hidden":true},
-              {"type":"ci","section":"🤖 CI","hidden":true},
-              {"type":"chore","section":"🧹 Chores","hidden":true}
-            ]
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          pip install black ruff pytest pytest-cov
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Run tests
+        run: pytest -q --maxfail=1 --disable-warnings
+
+  build_and_release:
+    needs: [lint_and_test]
+    runs-on: ubuntu-latest
+
+    outputs:
+      tag: ${{ steps.tagger.outputs.new_tag }}
+      version: ${{ steps.meta.outputs.version }}
+      zip_name: ${{ steps.bundle.outputs.zip_name }}
+
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # Conventional Commits → decide bump + create/push tag (vX.Y.Z)
+      - name: Compute next version & create tag
+        id: tagger
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: main
+          default_bump: patch
+          tag_prefix: v
+          custom_release_rules: |
+            feat:minor
+            fix:patch
+            perf:patch
+            refactor:patch
+            docs:patch
+            ci:patch
+            chore:patch
+          append_to_changelog: false
+
+      - name: Stop if no new version
+        if: ${{ steps.tagger.outputs.new_tag == '' }}
+        run: |
+          echo "No commits require a version bump. Exiting."
+          exit 0
+
+      - name: Derive version + write VERSION
+        id: meta
+        run: |
+          ver="${{ steps.tagger.outputs.new_tag }}"
+          ver="${ver#v}"
+          echo "$ver" > VERSION
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          git add VERSION
+          git commit -m "chore(release): set VERSION $ver [skip ci]" || true
+          git push || true
+
+      - name: Update CHANGELOG.md from tag action
+        run: |
+          mkdir -p .chg
+          printf "## %s\n\n%s\n" "${{ steps.tagger.outputs.new_tag }}" "${{ steps.tagger.outputs.changelog }}" > .chg/new.md
+          [ -f CHANGELOG.md ] && cat CHANGELOG.md >> .chg/new.md || true
+          mv .chg/new.md CHANGELOG.md
+          rm -rf .chg
+          git add CHANGELOG.md
+          git commit -m "chore(release): update changelog for ${{ steps.tagger.outputs.new_tag }} [skip ci]" || true
+          git push || true
+
+      - name: Build bundle (prefer ./bundle/, else curated repo)
+        id: bundle
+        run: |
+          set -euo pipefail
+          VER="${{ steps.meta.outputs.version }}"
+          OUTDIR="dist"; mkdir -p "$OUTDIR"
+          ZIP="the4lessons_bundle_v${VER}.zip"
+
+          # 1) Stage files to .dist according to packaging rules
+          rm -rf .dist; mkdir -p .dist
+          if [ -d "bundle" ]; then
+            rsync -a bundle/ .dist/bundle/
+          else
+            rsync -a ./ .dist/ \
+              --exclude '.git/' \
+              --exclude '.github/' \
+              --exclude 'dist/' \
+              --exclude '.venv/' \
+              --exclude 'venv/' \
+              --exclude '__pycache__/' \
+              --exclude 'tests/' \
+              --exclude 'docs/' \
+              --exclude '*.psd' --exclude '*.ai' --exclude '*.bak' --exclude '.DS_Store'
+          fi
+
+          # 2) Inject VERSION.txt
+          printf "%s\n" "$VER" > .dist/VERSION.txt
+
+          # 3) Build MANIFEST.json with per-file sha256 + sizes (ONLY what we ship)
+          python - <<'PY'
+import json, hashlib, pathlib
+base = pathlib.Path(".dist")
+files = []
+for p in sorted(base.rglob("*")):
+    if p.is_file():
+        rel = p.relative_to(".dist").as_posix()
+        h = hashlib.sha256()
+        with open(p, "rb") as f:
+            for chunk in iter(lambda: f.read(1<<20), b""):
+                h.update(chunk)
+        files.append({"path": rel, "bytes": p.stat().st_size, "sha256": h.hexdigest()})
+manifest = {"name": "the4lessons-orchestrator bundle", "version": "${{ steps.meta.outputs.version }}", "file_count": len(files), "files": files}
+pathlib.Path(".dist/MANIFEST.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+PY
+
+          # 4) Create the ZIP (root contains bundle-or-files + VERSION.txt + MANIFEST.json)
+          (cd .dist && zip -qr "../${OUTDIR}/${ZIP}" .)
+
+          # 5) SHA256SUMS for the ZIP
+          (cd "$OUTDIR" && (sha256sum "${ZIP}" || shasum -a 256 "${ZIP}")) > "$OUTDIR/SHA256SUMS.txt"
+
+          echo "zip_name=${ZIP}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release (attach bundle + metadata)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tagger.outputs.new_tag }}
+          name: ${{ steps.tagger.outputs.new_tag }}
+          body: ${{ steps.tagger.outputs.changelog }}
+          files: |
+            dist/${{ steps.bundle.outputs.zip_name }}
+            dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload MANIFEST.json for verify job
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-json
+          path: .dist/MANIFEST.json
+
+  verify_release:
+    needs: build_and_release
+    runs-on: ubuntu-latest
+    if: ${{ needs.build_and_release.outputs.zip_name != '' }}
+
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq unzip
+
+      - name: Download MANIFEST.json from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: manifest-json
+          path: verify
+
+      - name: Fetch release JSON
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG:  ${{ needs.build_and_release.outputs.tag }}
+        run: |
+          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" \
+               -H "Accept: application/vnd.github+json" \
+               "https://api.github.com/repos/${REPO}/releases/tags/${TAG}" > release.json
+
+      - name: Download ZIP + SHA256SUMS from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZIP: ${{ needs.build_and_release.outputs.zip_name }}
+        run: |
+          set -euo pipefail
+          ZIP_URL=$(jq -r --arg Z "$ZIP" '.assets[] | select(.name==$Z) | .url' release.json)
+          SUM_URL=$(jq -r '.assets[] | select(.name=="SHA256SUMS.txt") | .url' release.json)
+          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/octet-stream" "$ZIP_URL" -o "$ZIP"
+          curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/octet-stream" "$SUM_URL" -o "SHA256SUMS.txt"
+
+      - name: Verify ZIP checksum
+        run: |
+          if command -v sha256sum >/dev/null; then
+            sha256sum -c SHA256SUMS.txt
+          else
+            shasum -a 256 -c SHA256SUMS.txt
+          fi
+
+      - name: Unzip & check VERSION.txt
+        env:
+          EXPECT_VER: ${{ needs.build_and_release.outputs.version }}
+          ZIP: ${{ needs.build_and_release.outputs.zip_name }}
+        run: |
+          rm -rf unz && mkdir -p unz
+          unzip -q "$ZIP" -d unz
+          ACTUAL="$(tr -d '[:space:]' < unz/VERSION.txt)"
+          echo "Expect: ${EXPECT_VER} — Found: ${ACTUAL}"
+          test "$ACTUAL" = "$EXPECT_VER"
+
+      - name: Deep verify MANIFEST.json (per-file hashes & sizes)
+        run: |
+          python - <<'PY'
+import json, hashlib, pathlib, sys
+root = pathlib.Path("unz")
+manifest = json.loads(pathlib.Path("verify/MANIFEST.json").read_text())
+errors = []
+cnt = 0
+for f in manifest.get("files", []):
+    p = root / f["path"]
+    if not p.exists():
+        errors.append(f"Missing: {f['path']}")
+        continue
+    data = p.read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    if sha != f["sha256"]:
+        errors.append(f"SHA mismatch: {f['path']}")
+    if p.stat().st_size != int(f["bytes"]):
+        errors.append(f"Size mismatch: {f['path']}")
+    cnt += 1
+if cnt != int(manifest.get("file_count", cnt)):
+    errors.append(f"File count mismatch manifest={manifest.get('file_count')} actual={cnt}")
+if errors:
+    print("Manifest verification FAILED:")
+    print("\n".join(errors))
+    sys.exit(1)
+print(f"Manifest verification OK: {cnt} files")
+PY
