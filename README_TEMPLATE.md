@@ -1,74 +1,53 @@
-# 🌟 Project Title Here
+# 🧩 The 4 Lessons Orchestrator  
+> A base automation template for all **4 Lessons** projects — self-maintaining, verified, and Dependabot-backed.
 
-![Python](https://img.shields.io/badge/python-3.11-blue)
-![Lint](https://img.shields.io/github/actions/workflow/status/USERNAME/REPO_NAME/format.yml?label=lint&logo=github)
-![Tests](https://img.shields.io/github/actions/workflow/status/USERNAME/REPO_NAME/bootstrap-dev-hygiene.yml?label=tests)
-![License](https://img.shields.io/github/license/USERNAME/REPO_NAME)
-![Version](https://img.shields.io/github/v/release/USERNAME/REPO_NAME?label=latest)
-![Verified](https://img.shields.io/badge/verified-automation-green)
-
-> A self-maintaining automation pipeline powered by GitHub Actions and Dependabot.  
-> Replace this section with your project’s short description.
+[![Format](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/format.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/format.yml)
+[![Dev Hygiene](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/bootstrap-dev-hygiene.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/bootstrap-dev-hygiene.yml)
+[![Pre-commit Auto-update](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/auto-update-precommit.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/auto-update-precommit.yml)
+[![Release](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/release.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/release.yml)
+[![Verified Builds](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Flgreene2%2Fthe4lessons-orchestrator%2Fmain%2Fbadges%2Fverified.json)](https://github.com/lgreene2/the4lessons-orchestrator)
+[![Latest Tag](https://img.shields.io/github/v/tag/lgreene2/the4lessons-orchestrator?label=latest&color=blue)](https://github.com/lgreene2/the4lessons-orchestrator/releases)
 
 ---
 
-## 🧩 Developer Hygiene Automation
+### 🧠 Overview
 
-This repository includes a **self-maintaining hygiene system** powered by GitHub Actions and Dependabot.  
-It ensures consistent formatting, linting, and dependency updates automatically.
+The **4 Lessons Orchestrator** is the central automation framework for all 4 Lessons projects.  
+It handles formatting, linting, dependency management, version tagging, bundle packaging, and release publishing — automatically.
 
-| Workflow | Purpose | Schedule |
-|-----------|----------|----------|
-| ✨ **Format** | Runs Black + pre-commit formatters | Every PR |
-| 🧼 **Bootstrap Dev Hygiene** | Ensures consistent configuration | Weekly |
-| 🔁 **Auto-Update Pre-commit** | Refreshes pre-commit hooks | Monthly |
-| 🧱 **Dependabot** | Updates dependencies and Actions | Weekly |
-| 🚀 **Release** | Builds and publishes verified bundles | On merge to main |
+**Built for:**  
+- Books, guides, and companion curricula  
+- AI-powered game/app projects  
+- DEI, education, and development pipelines  
+- Any Python-based project needing verified, repeatable automation
+
+---
+
+## 🌱 Developer Hygiene Automation
+
+This repository includes a **self-maintaining developer hygiene system** powered by GitHub Actions and Dependabot.  
+It ensures consistent formatting, testing, and configuration management automatically.
+
+| 🧩 Workflow | 🧰 Purpose | ⏱️ Schedule |
+|:------------|:-----------|:------------|
+| 🧼 **Format (`format.yml`)** | Runs Black + pre-commit formatters on all PRs. Auto-commits fixes or leaves comments on forks. | Every PR |
+| 🧹 **Bootstrap Dev Hygiene (`bootstrap-dev-hygiene.yml`)** | Ensures configuration files (`pyproject.toml`, `.pre-commit-config.yaml`, `.editorconfig`, `requirements-dev.txt`, etc.) are present and correct. | Weekly (Monday 06:00 UTC) |
+| 🔁 **Auto-Update Pre-commit (`auto-update-precommit.yml`)** | Refreshes all hook versions and opens a PR with updates. | Monthly (1st of each month) |
+| 🤖 **Dependabot (`dependabot.yml`)** | Keeps `requirements-dev.txt` and GitHub Actions versions up-to-date. | Weekly |
+| 🧩 **Branch Protection + CODEOWNERS** | Ensures all PRs pass checks and assigns appropriate reviewers automatically. | Continuous |
 
 ---
 
 ## 💻 Local Developer Setup
 
+Developers can replicate the same environment locally:
+
 ```bash
+# Create and activate a virtual environment
 python -m venv .venv && source .venv/bin/activate
+
+# Install developer dependencies
 pip install -r requirements-dev.txt
+
+# Initialize pre-commit hooks
 pre-commit install
-```
-
-Run checks manually:
-
-```bash
-pre-commit run --all-files
-```
-
----
-
-## 🧱 Repository Structure
-
-```
-.github/
- ├── workflows/
- │   ├── format.yml
- │   ├── bootstrap-dev-hygiene.yml
- │   ├── auto-update-precommit.yml
- │   ├── release.yml
- │   └── dependabot.yml
- ├── CODEOWNERS
- ├── CODE_OF_CONDUCT.md
- ├── SECURITY.md
- ├── FUNDING.yml
- └── SUPPORT.md
-```
-
----
-
-## 🧭 Quick Links
-
-- 🧠 **Docs:** [GitHub Pages Documentation](https://USERNAME.github.io/REPO_NAME)
-- 🚀 **Releases:** [View Releases](https://github.com/USERNAME/REPO_NAME/releases)
-- 🧰 **Actions Dashboard:** [View Workflows](https://github.com/USERNAME/REPO_NAME/actions)
-
----
-
-### © 2025 The 4 Lessons Project — All rights reserved.
-Automation Verified • Developer Ready 🚀
