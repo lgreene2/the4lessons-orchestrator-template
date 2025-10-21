@@ -1,0 +1,25 @@
+# Auto-detect text files and normalize line endings
+* text=auto eol=lf
+
+# Mark Python files as text
+*.py text
+
+# Treat Jupyter notebooks as binary (prevents noisy diffs)
+*.ipynb binary
+
+# Ensure GitHub linguist shows mostly Python
+*.py linguist-language=Python
+
+# Keep workflow YAMLs clean
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Exclude docs images from diff noise
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.svg binary
+
+# Merge rules for lockfiles (avoid conflicts)
+package-lock.json merge=union
+poetry.lock merge=union
