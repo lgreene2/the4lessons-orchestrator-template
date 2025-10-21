@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+*.manifest
+*.spec
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+.coverage
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs & Temp
+*.log
+logs/
+tmp/
+*.bak
+
+# GitHub Actions / CI cache
+*.tmp
+__workflows_cache__/
+
+# Local development
+.settings/
+local_settings.py
