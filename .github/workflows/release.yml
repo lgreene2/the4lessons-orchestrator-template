@@ -1,10 +1,31 @@
 name: Release
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
-  build-release:
+  release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: echo 'Building release bundle'
+      - name: Run Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: simple
+          package-name: the4lessons-orchestrator-template
+          changelog-types: |
+            [
+              {"type":"feat","section":"✨ Features","hidden":false},
+              {"type":"fix","section":"🐛 Fixes","hidden":false},
+              {"type":"perf","section":"⚡ Performance","hidden":false},
+              {"type":"refactor","section":"🔧 Refactors","hidden":false},
+              {"type":"docs","section":"📝 Docs","hidden":false},
+              {"type":"test","section":"🧪 Tests","hidden":true},
+              {"type":"ci","section":"🤖 CI","hidden":true},
+              {"type":"chore","section":"🧹 Chores","hidden":true}
+            ]
