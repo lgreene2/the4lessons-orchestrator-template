@@ -1,6 +1,7 @@
 from __future__ import annotations
 import pathlib
 
+
 def _load_version() -> str:
     """
     Return the project version string.
@@ -19,6 +20,7 @@ def _load_version() -> str:
         return local_version.read_text(encoding="utf-8").strip()
 
     return "0.0.0"
+
 
 __version__ = _load_version()
 __all__ = ["__version__"]
