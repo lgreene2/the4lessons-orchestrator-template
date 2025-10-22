@@ -1,53 +1,51 @@
-# 🧩 The 4 Lessons Orchestrator  
-> A base automation template for all **4 Lessons** projects — self-maintaining, verified, and Dependabot-backed.
+# 🧩 The 4 Lessons Orchestrator Template  
+> A standardized GitHub template for 4 Lessons projects — preconfigured with automated CI, formatting, linting, and testing.
 
-[![Format](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/format.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/format.yml)
-[![Dev Hygiene](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/bootstrap-dev-hygiene.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/bootstrap-dev-hygiene.yml)
-[![Pre-commit Auto-update](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/auto-update-precommit.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/auto-update-precommit.yml)
-[![Release](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/release.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator/actions/workflows/release.yml)
-[![Verified Builds](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Flgreene2%2Fthe4lessons-orchestrator%2Fmain%2Fbadges%2Fverified.json)](https://github.com/lgreene2/the4lessons-orchestrator)
-[![Latest Tag](https://img.shields.io/github/v/tag/lgreene2/the4lessons-orchestrator?label=latest&color=blue)](https://github.com/lgreene2/the4lessons-orchestrator/releases)
+[![CI (format → lint → tests)](https://github.com/lgreene2/the4lessons-orchestrator-template/actions/workflows/ci.yml/badge.svg)](https://github.com/lgreene2/the4lessons-orchestrator-template/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-### 🧠 Overview
+## 🧠 Overview
 
-The **4 Lessons Orchestrator** is the central automation framework for all 4 Lessons projects.  
-It handles formatting, linting, dependency management, version tagging, bundle packaging, and release publishing — automatically.
+The **4 Lessons Orchestrator Template** provides a ready-to-use foundation for all 4 Lessons projects.  
+Every new repo created from this template automatically includes the same verified CI/CD pipeline as the main Orchestrator framework.
 
-**Built for:**  
-- Books, guides, and companion curricula  
-- AI-powered game/app projects  
-- DEI, education, and development pipelines  
-- Any Python-based project needing verified, repeatable automation
+**Preconfigured automation includes:**
+- ✅ **Black** for code formatting  
+- ✅ **Ruff** for linting and style enforcement  
+- ✅ **Pytest** for testing and coverage  
+- ✅ **GitHub Actions** for CI and dependency management  
+- ✅ **Dependabot** support for auto-updates  
 
 ---
 
-## 🌱 Developer Hygiene Automation
+## ⚙️ Built-in Workflows
 
-This repository includes a **self-maintaining developer hygiene system** powered by GitHub Actions and Dependabot.  
-It ensures consistent formatting, testing, and configuration management automatically.
-
-| 🧩 Workflow | 🧰 Purpose | ⏱️ Schedule |
-|:------------|:-----------|:------------|
-| 🧼 **Format (`format.yml`)** | Runs Black + pre-commit formatters on all PRs. Auto-commits fixes or leaves comments on forks. | Every PR |
-| 🧹 **Bootstrap Dev Hygiene (`bootstrap-dev-hygiene.yml`)** | Ensures configuration files (`pyproject.toml`, `.pre-commit-config.yaml`, `.editorconfig`, `requirements-dev.txt`, etc.) are present and correct. | Weekly (Monday 06:00 UTC) |
-| 🔁 **Auto-Update Pre-commit (`auto-update-precommit.yml`)** | Refreshes all hook versions and opens a PR with updates. | Monthly (1st of each month) |
-| 🤖 **Dependabot (`dependabot.yml`)** | Keeps `requirements-dev.txt` and GitHub Actions versions up-to-date. | Weekly |
-| 🧩 **Branch Protection + CODEOWNERS** | Ensures all PRs pass checks and assigns appropriate reviewers automatically. | Continuous |
+| 🧩 Workflow | ⚙️ Purpose |
+| :-- | :-- |
+| **CI (`ci.yml`)** | Runs Format → Lint → Tests across Python 3.10–3.12 |
+| **Dependabot (`dependabot.yml`)** | Keeps dependencies and GitHub Actions up to date |
+| **Pre-commit (`.pre-commit-config.yaml`)** | Local developer hooks mirror the same checks as CI |
+| **Security / Code of Conduct** | Automatically included for open collaboration |
 
 ---
 
 ## 💻 Local Developer Setup
 
-Developers can replicate the same environment locally:
-
 ```bash
+# Clone your new project (after using this template)
+git clone <your-new-repo-url>
+cd <your-new-repo>
+
 # Create and activate a virtual environment
 python -m venv .venv && source .venv/bin/activate
 
-# Install developer dependencies
+# Install dependencies
 pip install -r requirements-dev.txt
 
-# Initialize pre-commit hooks
-pre-commit install
+# Run the same checks that CI runs
+python -m black .
+ruff check .
+pytest
