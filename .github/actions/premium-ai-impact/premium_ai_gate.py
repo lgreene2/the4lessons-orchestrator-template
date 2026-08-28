@@ -40,7 +40,11 @@ def validate_rubric(rubric: dict[str, Any]) -> None:
         if not isinstance(definition, dict):
             raise GateError(f"Dimension {key!r} must be an object")
         weight = definition.get("weight")
-        if not isinstance(weight, (int, float)) or isinstance(weight, bool) or weight <= 0:
+        if (
+            not isinstance(weight, (int, float))
+            or isinstance(weight, bool)
+            or weight <= 0
+        ):
             raise GateError(f"Dimension {key!r} has invalid weight")
         weights.append(float(weight))
     if not math.isclose(sum(weights), 1.0, rel_tol=0.0, abs_tol=1e-9):
@@ -50,11 +54,17 @@ def validate_rubric(rubric: dict[str, Any]) -> None:
         raise GateError("Rubric must define thresholds")
     for mode_key in ("candidate", "public_release"):
         value = thresholds.get(mode_key)
-        if not isinstance(value, (int, float)) or isinstance(value, bool) or not 0 <= value <= 100:
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not 0 <= value <= 100
+        ):
             raise GateError(f"Invalid threshold for {mode_key}")
     for gate_group in ("hard_gates", "public_release_gates"):
         values = rubric.get(gate_group)
-        if not isinstance(values, list) or not all(isinstance(item, str) and item for item in values):
+        if not isinstance(values, list) or not all(
+            isinstance(item, str) and item for item in values
+        ):
             raise GateError(f"Rubric {gate_group} must be a list of gate names")
     rules = rubric.get("rules")
     if not isinstance(rules, dict):
@@ -73,7 +83,9 @@ def _nonempty_strings(value: Any) -> list[str]:
     return [item.strip() for item in value if isinstance(item, str) and item.strip()]
 
 
-def _validate_automation_assessment(rubric: dict[str, Any], receipt: dict[str, Any]) -> None:
+def _validate_automation_assessment(
+    rubric: dict[str, Any], receipt: dict[str, Any]
+) -> None:
     rules = rubric.get("rules", {})
     if rules.get("maximum_safe_high_value_automation_default") is not True:
         return
@@ -86,14 +98,22 @@ def _validate_automation_assessment(rubric: dict[str, Any], receipt: dict[str, A
     retained_controls = _nonempty_strings(automation.get("retained_human_controls"))
     rationale = str(automation.get("no_additional_automation_rationale", "")).strip()
     if not automated_stages and not rationale:
-        raise GateError("Automation assessment must list automated stages or explain why no additional safe, high-value automation applies")
+        raise GateError(
+            "Automation assessment must list automated stages or explain why no additional safe, high-value automation applies"
+        )
     if not retained_controls:
-        raise GateError("Automation assessment must identify retained human-control points")
+        raise GateError(
+            "Automation assessment must identify retained human-control points"
+        )
     if not rationale:
-        raise GateError("Automation assessment must explain why remaining manual/human-controlled work is retained")
+        raise GateError(
+            "Automation assessment must explain why remaining manual/human-controlled work is retained"
+        )
 
 
-def _score_dimensions(rubric: dict[str, Any], receipt: dict[str, Any]) -> tuple[float, list[str]]:
+def _score_dimensions(
+    rubric: dict[str, Any], receipt: dict[str, Any]
+) -> tuple[float, list[str]]:
     dimensions = receipt.get("dimensions")
     if not isinstance(dimensions, dict):
         raise GateError("Receipt must define dimensions")
@@ -105,17 +125,25 @@ def _score_dimensions(rubric: dict[str, Any], receipt: dict[str, Any]) -> tuple[
             problems.append(f"missing dimension: {key}")
             continue
         score = review.get("score")
-        if not isinstance(score, (int, float)) or isinstance(score, bool) or not 0 <= score <= 100:
+        if (
+            not isinstance(score, (int, float))
+            or isinstance(score, bool)
+            or not 0 <= score <= 100
+        ):
             problems.append(f"invalid score for {key}")
             continue
         evidence = review.get("evidence")
-        if not isinstance(evidence, list) or not any(isinstance(item, str) and item.strip() for item in evidence):
+        if not isinstance(evidence, list) or not any(
+            isinstance(item, str) and item.strip() for item in evidence
+        ):
             problems.append(f"missing evidence for {key}")
         weighted += float(score) * float(definition["weight"])
     return weighted, problems
 
 
-def evaluate(rubric: dict[str, Any], receipt: dict[str, Any], mode: str) -> dict[str, Any]:
+def evaluate(
+    rubric: dict[str, Any], receipt: dict[str, Any], mode: str
+) -> dict[str, Any]:
     if mode not in {"candidate", "public-release"}:
         raise GateError(f"Unsupported mode: {mode}")
     artifact = receipt.get("artifact")
@@ -137,13 +165,21 @@ def evaluate(rubric: dict[str, Any], receipt: dict[str, Any], mode: str) -> dict
     gates = receipt.get("gates")
     if not isinstance(gates, dict):
         raise GateError("Receipt must define gates")
-    failed_gates = [gate for gate in rubric["hard_gates"] if gates.get(gate) is not True]
+    failed_gates = [
+        gate for gate in rubric["hard_gates"] if gates.get(gate) is not True
+    ]
     release_failed: list[str] = []
     if mode == "public-release":
-        release_failed = [gate for gate in rubric["public_release_gates"] if gates.get(gate) is not True]
+        release_failed = [
+            gate
+            for gate in rubric["public_release_gates"]
+            if gates.get(gate) is not True
+        ]
     threshold_key = "public_release" if mode == "public-release" else "candidate"
     threshold = float(rubric["thresholds"][threshold_key])
-    passed = not problems and not failed_gates and not release_failed and score >= threshold
+    passed = (
+        not problems and not failed_gates and not release_failed and score >= threshold
+    )
     return {
         "standard": rubric.get("name"),
         "standard_version": rubric.get("version"),
@@ -173,21 +209,30 @@ def run_self_test() -> None:
         "rules": {
             "maximum_safe_high_value_automation_default": True,
             "automation_must_not_reduce_quality_or_governance": True,
-            "quality_pass_does_not_grant_release_authority": True
-        }
+            "quality_pass_does_not_grant_release_authority": True,
+        },
     }
     validate_rubric(rubric)
     receipt = {
         "artifact": {"name": "test", "version": "1"},
-        "ai_uses": [{"purpose": "test", "user_or_production_value": "test", "human_oversight": "test"}],
+        "ai_uses": [
+            {
+                "purpose": "test",
+                "user_or_production_value": "test",
+                "human_oversight": "test",
+            }
+        ],
         "automation": {
             "assessed": True,
             "automated_stages": ["test validation"],
             "retained_human_controls": ["public release approval"],
-            "no_additional_automation_rationale": "Consequential release approval remains human-governed."
+            "no_additional_automation_rationale": "Consequential release approval remains human-governed.",
         },
-        "dimensions": {"a": {"score": 100, "evidence": ["ok"]}, "b": {"score": 100, "evidence": ["ok"]}},
-        "gates": {"safe": True, "approved": False}
+        "dimensions": {
+            "a": {"score": 100, "evidence": ["ok"]},
+            "b": {"score": 100, "evidence": ["ok"]},
+        },
+        "gates": {"safe": True, "approved": False},
     }
     candidate = evaluate(rubric, receipt, "candidate")
     if candidate["status"] != "PASS":
@@ -201,16 +246,22 @@ def run_self_test() -> None:
         evaluate(rubric, missing_automation, "candidate")
     except GateError as exc:
         if "automation" not in str(exc).lower():
-            raise GateError("Self-test automation failure produced the wrong error") from exc
+            raise GateError(
+                "Self-test automation failure produced the wrong error"
+            ) from exc
     else:
-        raise GateError("Self-test must reject a receipt without an automation assessment")
+        raise GateError(
+            "Self-test must reject a receipt without an automation assessment"
+        )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rubric", default="rubric.json")
     parser.add_argument("--receipt")
-    parser.add_argument("--mode", choices=("candidate", "public-release"), default="candidate")
+    parser.add_argument(
+        "--mode", choices=("candidate", "public-release"), default="candidate"
+    )
     parser.add_argument("--rubric-only", action="store_true")
     parser.add_argument("--self-test", action="store_true")
     return parser.parse_args()
@@ -226,10 +277,14 @@ def main() -> int:
         rubric = load_json(Path(args.rubric))
         validate_rubric(rubric)
         if args.rubric_only:
-            print(f"Rubric validation: PASS ({rubric.get('name')} v{rubric.get('version')})")
+            print(
+                f"Rubric validation: PASS ({rubric.get('name')} v{rubric.get('version')})"
+            )
             return 0
         if not args.receipt:
-            raise GateError("--receipt is required unless --rubric-only or --self-test is used")
+            raise GateError(
+                "--receipt is required unless --rubric-only or --self-test is used"
+            )
         receipt = load_json(Path(args.receipt))
         result = evaluate(rubric, receipt, args.mode)
         print(json.dumps(result, indent=2, sort_keys=True))
