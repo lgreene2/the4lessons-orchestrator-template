@@ -1,0 +1,44 @@
+name: 4L Premium + AI Impact Gate
+description: Public distribution mirror of the governed 4L premium-quality and purposeful-AI gate. Authority remains the private 4L Orchestrator.
+
+inputs:
+  receipt:
+    description: Path to a governed review receipt in the caller workspace.
+    required: false
+    default: ""
+  mode:
+    description: candidate or public-release
+    required: false
+    default: candidate
+
+outputs:
+  release-authority:
+    description: Always false. Quality readiness never grants release authority.
+    value: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Validate distributed standard
+      shell: bash
+      run: |
+        set -euo pipefail
+        python "${{ github.action_path }}/premium_ai_gate.py" \
+          --rubric "${{ github.action_path }}/rubric.json" \
+          --rubric-only
+        python "${{ github.action_path }}/premium_ai_gate.py" --self-test
+
+    - name: Validate governed receipt
+      if: ${{ inputs.receipt != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        python "${{ github.action_path }}/premium_ai_gate.py" \
+          --rubric "${{ github.action_path }}/rubric.json" \
+          --receipt "$GITHUB_WORKSPACE/${{ inputs.receipt }}" \
+          --mode "${{ inputs.mode }}"
+
+    - name: Preserve owner release authority
+      shell: bash
+      run: |
+        echo "4L premium/AI quality validation completed. Distribution mirror does not grant release authority."
