@@ -1,0 +1,72 @@
+{
+  "name": "4L Premium + AI Impact Production Standard",
+  "version": "1.0.0",
+  "doctrine": "Premium Human Experience. AI-Amplified Production. Governed Positive Impact.",
+  "operating_model": "automation-first, exception-driven, human-governed",
+  "thresholds": {
+    "candidate": 90,
+    "public_release": 92
+  },
+  "dimensions": {
+    "premium_experience": {
+      "weight": 0.20,
+      "label": "Premium experience quality",
+      "evidence_examples": ["visual and interaction QA", "content polish", "device review", "user-flow review"]
+    },
+    "ai_value": {
+      "weight": 0.20,
+      "label": "AI value and leverage",
+      "evidence_examples": ["quality improvement", "cycle-time reduction", "personalization", "AI-assisted QA", "accessibility improvement", "safe automation coverage", "reduction of avoidable manual production work"]
+    },
+    "positive_impact": {
+      "weight": 0.15,
+      "label": "Positive human impact",
+      "evidence_examples": ["intended benefit", "user outcome", "harm analysis", "mitigation"]
+    },
+    "technical_readiness": {
+      "weight": 0.15,
+      "label": "Technical and operational readiness",
+      "evidence_examples": ["automated tests", "runtime QA", "mobile QA", "observability", "rollback or recovery path", "automated preflight", "automated provenance and packaging"]
+    },
+    "accessibility_inclusion": {
+      "weight": 0.10,
+      "label": "Accessibility and inclusion",
+      "evidence_examples": ["keyboard/touch support", "captions/transcripts", "contrast/readability", "assistive technology review"]
+    },
+    "canon_ip_brand": {
+      "weight": 0.10,
+      "label": "Canon, IP, and brand integrity",
+      "evidence_examples": ["source authority", "checksum/provenance", "rights basis", "brand/canon QA"]
+    },
+    "governance_safety_privacy": {
+      "weight": 0.10,
+      "label": "Governance, safety, privacy, and security",
+      "evidence_examples": ["privacy review", "security review", "human oversight", "release authority", "AI provenance", "exception-driven human control points"]
+    }
+  },
+  "hard_gates": [
+    "canon_source_verified",
+    "rights_verified",
+    "no_unresolved_p0_p1",
+    "privacy_security_reviewed",
+    "accessibility_reviewed",
+    "ai_purpose_documented",
+    "human_oversight_defined",
+    "ai_provenance_captured",
+    "negative_impact_considered",
+    "owner_release_authority_preserved"
+  ],
+  "public_release_gates": [
+    "owner_release_approved"
+  ],
+  "rules": {
+    "score_range": [0, 100],
+    "all_dimensions_required": true,
+    "all_hard_gates_required": true,
+    "evidence_required_per_dimension": true,
+    "maximum_safe_high_value_automation_default": true,
+    "automation_must_not_reduce_quality_or_governance": true,
+    "build_directive_inherits_automation_default": true,
+    "quality_pass_does_not_grant_release_authority": true
+  }
+}
